@@ -1,3 +1,4 @@
+from functools import lru_cache
 from pathlib import Path
 import joblib
 import pandas as pd
@@ -7,6 +8,11 @@ from .forms import LoanPredictionForm
 from .models import Prediction
 
 MODEL_PATH = Path(settings.BASE_DIR) / "model.joblib"
+
+
+@lru_cache(maxsize=1)
+def load_pipeline():
+    return joblib.load(MODEL_PATH)
 
 
 def dashboard(request):
@@ -29,7 +35,7 @@ def predict(request):
             values = form.cleaned_data.copy()
             applicant_name = values.pop("applicant_name", "")
             features = pd.DataFrame([values])
-            pipeline = joblib.load(MODEL_PATH)
+            pipeline = load_pipeline()
             approved = bool(pipeline.predict(features)[0])
             probabilities = pipeline.predict_proba(features)[0]
             probability = float(probabilities[1]) if len(probabilities) > 1 else float(approved)

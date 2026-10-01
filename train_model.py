@@ -35,7 +35,14 @@ def train(csv_path: str) -> None:
     ])
     pipeline = Pipeline([
         ("preprocessing", preprocessing),
-        ("classifier", RandomForestClassifier(n_estimators=100, random_state=42, class_weight="balanced", n_jobs=-1)),
+        ("classifier", RandomForestClassifier(
+            n_estimators=40,
+            max_depth=16,
+            min_samples_leaf=2,
+            random_state=42,
+            class_weight="balanced",
+            n_jobs=-1,
+        )),
     ])
     stratify = y if y.value_counts().min() >= 2 else None
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=stratify)
@@ -43,7 +50,7 @@ def train(csv_path: str) -> None:
     predictions = pipeline.predict(X_test)
     print(classification_report(y_test, predictions, zero_division=0))
     print(f"Accuracy: {accuracy_score(y_test, predictions):.3f}")
-    joblib.dump(pipeline, MODEL_PATH)
+    joblib.dump(pipeline, MODEL_PATH, compress=3)
     META_PATH.write_text(json.dumps({"features": X.columns.tolist(), "rows": len(data), "accuracy": accuracy_score(y_test, predictions)}, indent=2))
     print(f"Saved model to {MODEL_PATH}")
 
